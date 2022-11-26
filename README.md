@@ -36,7 +36,7 @@ Simple Functionality Test.
 
 Checks if the best practices and the right coding style has been used.
 
-    Give an example
+    Write How you like!
 
 ## Deployment
 
