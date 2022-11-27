@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import logo from './logo.svg';
 import lolLogo from './league-of-legends.png';
 import './App.css';
 
 
-function App() {
+
+ function App() {
 
   // Constants
-  const MY_API_KEY = 'RGAPI-b2cf2007-bc70-41f6-88fe-112e8eba0f6d'; // My API Access Key
+  const MY_API_KEY = 'RGAPI-3a2f9ccf-8483-4db6-86b1-9b53080d4c95'; // My API Access Key
 
   
   
@@ -21,24 +22,30 @@ function App() {
   const [users, setUsers] = useState([]);           // users      : an array of user objects that holds the information of the player (ranked and summoner info)
   const [started, setStarted] = useState(false);
 
-  onStart(); // Call start function so we can init the previously used list
+  // GOTTA DO THIS BECAUSE REACT IS WEIRD... NEED TO LOAD STUFF ONLY ON PAGE OPEN
+  window.onload = () => {
+    onStart();
+  }
+
+
 
   // Author      : Andrew Hudson
   // Name        : searchForPlayerr(event)
   // Description : This function takes the input from the input box that is being live updated in the 'searchText' varitable!
-  function searchForPlayer(event)
+  async function searchForPlayer(event)
 {
+  console.log("SEARCHED");
     // Set Up correct API call
     var APICallString = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + searchText + "?api_key=" + MY_API_KEY;
     // Handle Api call
-     axios.get(APICallString).then(function(response)
+    await axios.get(APICallString).then(async function(response)
     {
-      console.log(response.data);
-      setPlayerData(response.data); // Saving player Data
+
+
       var myPlayerData = response.data;
       var APIRankedCallString = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/" + response.data.id + "?api_key=" + MY_API_KEY;
       setLoading(true);
-      axios.get(APIRankedCallString).then(function(response)
+      await axios.get(APIRankedCallString).then(function(response)
       {
         if(JSON.stringify(response.data) == "[]")
         {
@@ -46,33 +53,21 @@ function App() {
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          console.log(userToAdd);
-          users.push(userToAdd);
-          localStorage.setItem(localStorage.length, myPlayerData.name);
         }
 
         else if(response.data[0].queueType == "RANKED_SOLO_5x5")
         {
-            setRankData(response.data[0]);
             var myRankedData = response.data[0];
             var score = 0;
             var userToAdd = {myPlayerData, myRankedData, score};
-            scoreUser(userToAdd);
-            console.log(userToAdd);
-            users.push(userToAdd);
-            localStorage.setItem(localStorage.length, myPlayerData.name);
-            
+            scoreUser(userToAdd);  
         }
         else if(response.data[0].queueType == "RANKED_FLEX_SR")
         {
-          setRankData(response.data[1]);
           var myRankedData = response.data[1];
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
-          scoreUser(userToAdd);
-          console.log(userToAdd);
-          users.push(userToAdd);
-          localStorage.setItem(localStorage.length, myPlayerData.name);
+          scoreUser(userToAdd); 
         }
         else
         {
@@ -80,11 +75,9 @@ function App() {
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          console.log(userToAdd);
-          users.push(userToAdd);
-          localStorage.setItem(localStorage.length, myPlayerData.name);
         }
-  
+        users.push(userToAdd);
+        localStorage.setItem(localStorage.length, myPlayerData.name);
         setLoading(false);
           
 
@@ -93,21 +86,20 @@ function App() {
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          console.log(userToAdd);
-          users.push(userToAdd);
-          console.log(error);
+
+          
+
           localStorage.setItem(localStorage.length, myPlayerData.name);
         });
 
+        
         sortUsers();
-        console.log();
+
 
       // Success
     }).catch(function (error){
 
 
-      setPlayerData({}); 
-      setRankData({});
       // Error
     });
     // Get Ranked Info 
@@ -118,46 +110,49 @@ function App() {
   // Description : This function takes in a Leauge of Legends username (playerName) and then adds it to the array of users (users)
  async  function addPlayerByName(playerName)
   {
-    if(playerName == "null")
+    
+    console.log("ADDED");
+    if(playerName == "null" || localStorage.getItem(playerName) != null)
     {return;}
     // Set Up correct API call
     var APICallString = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + String(playerName) + "?api_key=" + MY_API_KEY;
     // Handle Api call
      axios.get(APICallString).then(function(response)
     {
-      setPlayerData(response.data); // Saving player Data
+      
+      //setPlayerData(response.data);
       var myPlayerData = response.data;
       var APIRankedCallString = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/" + response.data.id + "?api_key=" + MY_API_KEY;
-      setLoading(true);
-      axios.get(APIRankedCallString).then(function(response)
+      axios.get(APIRankedCallString).then(async function(response)
       {
+        //setRankData(response.data);
         if(JSON.stringify(response.data) == "[]")
         {
           var myRankedData = {};
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          users.push(userToAdd);
+          
         }
 
         else if(response.data[0].queueType == "RANKED_SOLO_5x5")
         {
-            setRankData(response.data[0]);
+
             var myRankedData = response.data[0];
             var score = 0;
             var userToAdd = {myPlayerData, myRankedData, score};
             scoreUser(userToAdd);
-            users.push(userToAdd);
+            
             
         }
         else if(response.data[0].queueType == "RANKED_FLEX_SR")
         {
-          setRankData(response.data[1]);
+
           var myRankedData = response.data[1];
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          users.push(userToAdd);
+          
         }
         else
         {
@@ -165,19 +160,20 @@ function App() {
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          users.push(userToAdd);
+          
           
         }
-  
-          
+        await users.push(userToAdd);
+        setRankData(response.data);
 
-        }).catch(function (error){
+
+        }).catch(async function (error){
           var myRankedData = {};
           var score = 0;
           var userToAdd = {myPlayerData, myRankedData, score};
           scoreUser(userToAdd);
-          users.push(userToAdd);
-          console.log(error);
+          await users.push(userToAdd);
+
         });
 
 
@@ -187,8 +183,7 @@ function App() {
     }).catch(function (error){
 
 
-      setPlayerData({}); 
-      setRankData({});
+
       // Error
     });
     // Get Ranked Info 
@@ -225,6 +220,9 @@ function App() {
   // Name        : renderUsers(user, index)
   // Description : This function is used in the array.mapping() function callback paramater and prints all the objects in the array of users as the summoner cards
   const renderUser = (user, index) => {
+
+    
+    console.log(user);
 
     return(
     <li key = {index}>
@@ -284,7 +282,7 @@ function App() {
       // SetScore
       userToScore.score = score;
 
-      //console.log(userToScore);
+
   }
 
   // Author      : Andrew Hudson
@@ -363,25 +361,27 @@ function App() {
       return myBaseScore;
   }
 
+
   // Author      : Andrew Hudson
   // Name        : onStart() (async)
   // Description : This function runs only once when the website is first opened!
   async function onStart()
   {
+   
+    console.log("DICK AND SHIT");
+    localStorage.removeItem("c1_192.168.1.14:3000");
 
     //localStorage.clear();
-    
-    if(localStorage.length > 0 && started == false)
+    if(localStorage.length > 0 && started == false && users.length <= 0)
     {
-      console.log("start started...");
+      
       for(var  i = 0; i < localStorage.length; i++)
       {
         var playerName = localStorage.getItem(i);
-        console.log(playerName);
         await addPlayerByName(String(playerName));
       }
-      sortUsers();
-      await setStarted(true);
+      console.log(localStorage);
+      await setStarted(!started);
     }
   }
 
@@ -397,7 +397,9 @@ function App() {
       ? 
       <>
           {sortUsers()}
+
           {users.map(renderUser)}
+
       </>
         
 
