@@ -120,6 +120,27 @@ transform: scale(1.05);
 
 }
 
+.user button
+{
+  background-color:#ffcccc;
+  position: relative;
+  display: block;
+  text-decoration: none;
+  font-family: 'lolFont';
+  color: #000000;
+  text-align: center;
+  padding: 16px 16px;
+  text-decoration: none;
+  font-size: 17px;
+  margin-left: 41.5%;
+  overflow: hidden;
+  border-top-left-radius: 35px;
+  border-top-right-radius: 35px;
+  border-bottom-right-radius: 35px;
+  border-bottom-left-radius: 35px;
+  box-shadow: 0 0 20px 2px #0d0d0f;
+}
+
 .container button{
   display: block;
   text-decoration: none;

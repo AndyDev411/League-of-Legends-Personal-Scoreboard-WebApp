@@ -9,7 +9,7 @@ import './App.css';
  function App() {
 
   // Constants
-  const MY_API_KEY = 'RGAPI-3a2f9ccf-8483-4db6-86b1-9b53080d4c95'; // My API Access Key
+  const MY_API_KEY = 'RGAPI-4358209a-2340-4b2f-b7c1-b7025b101bae'; // My API Access Key
 
   
   
@@ -25,8 +25,53 @@ import './App.css';
   // GOTTA DO THIS BECAUSE REACT IS WEIRD... NEED TO LOAD STUFF ONLY ON PAGE OPEN
   window.onload = () => {
     onStart();
+    rateLimitBatchRequest(20);
   }
 
+  var intId = 0;
+  var batch_ids = [];
+  var results = [];
+
+  // Author      : Andrew Hudson
+  // Name        : quaryBatch()
+  // Description : This function quarries the batched names that I wish to request that were saved in the browsers local folders
+  async function quaryBatch(){
+    if(batch_ids.length == 0)
+    {
+      clearInterval(intId);
+      return;
+    }
+
+    
+
+    var next_id = batch_ids.pop()
+
+    if(next_id == null)
+    {
+      return;
+    }
+
+    addPlayerByName(next_id);
+  }
+
+  // Author      : Andrew Hudson
+  // Name        : rateLimitBatchRequest(rps)
+  // Description : This function is used for initilizing the Interval to a specified Request Per Second (rps)
+  async function rateLimitBatchRequest(rps)
+  {
+    var delay_ms = 1000/rps;
+    intId = setInterval(quaryBatch, delay_ms);
+  }
+
+  // Author      : Andrew Hudson
+  // Name        : addToBatch(toAdd)
+  // Description : This function adds a name (toAdd) to the Batched names
+  async function addToBatch(toAdd)
+  {
+    
+    batch_ids.push[toAdd];
+    console.log(batch_ids);
+  }
 
 
   // Author      : Andrew Hudson
@@ -34,19 +79,28 @@ import './App.css';
   // Description : This function takes the input from the input box that is being live updated in the 'searchText' varitable!
   async function searchForPlayer(event)
 {
-  console.log("SEARCHED");
+  //console.log("SEARCHED");
     // Set Up correct API call
+
+    
+
     var APICallString = "https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + searchText + "?api_key=" + MY_API_KEY;
     // Handle Api call
     await axios.get(APICallString).then(async function(response)
     {
-
+      if(getStorageKey(response.data.name) != -1)
+      {
+        console.log("User Already Added!");
+        return;
+      }
 
       var myPlayerData = response.data;
       var APIRankedCallString = "https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/" + response.data.id + "?api_key=" + MY_API_KEY;
       setLoading(true);
       await axios.get(APIRankedCallString).then(function(response)
       {
+
+
         if(JSON.stringify(response.data) == "[]")
         {
           var myRankedData = {};
@@ -106,12 +160,11 @@ import './App.css';
 }
 
   // Author      : Andrew Hudson
-  // Name        : addPlayer(playerName)
+  // Name        : addPlayerByName(playerName)
   // Description : This function takes in a Leauge of Legends username (playerName) and then adds it to the array of users (users)
  async  function addPlayerByName(playerName)
   {
     
-    console.log("ADDED");
     if(playerName == "null" || localStorage.getItem(playerName) != null)
     {return;}
     // Set Up correct API call
@@ -190,6 +243,42 @@ import './App.css';
   }
 
   // Author      : Andrew Hudson
+  // Name        : removePlayer(user)
+  // Description : This function removes the given player (user) from the current users array and the local storeage then rerenders the screen
+  async function removePlayer(user)
+  {
+    console.log("REMOVE : " + user.myPlayerData.name);
+    var index = users.indexOf(user);
+    users.splice(index, 1);
+    localStorage.clear();
+
+    for(let i = 0; i < users.length; i++)
+    {
+      localStorage.setItem(i, users[i].myPlayerData.name);
+    }
+    
+    //localStorage.removeItem(user.myPlayerData.name);
+    setSearchText("wat" + Math.random());
+  }
+
+  // Author      : Andrew Hudson
+  // Name        : getStorageKey(username)
+  // Description : This function takes in a username (username) and returns its key in the localStorage
+  function getStorageKey(username)
+  {
+    for (let i = 0; i < localStorage.length; i++)
+    {
+      if(String(localStorage[i]) == username)
+      {
+        return i;
+      }
+    }
+
+    return -1;
+
+  }
+
+  // Author      : Andrew Hudson
   // Name        : GiveUser(user, userRank)
   // Description : this function draws the summoner cards using the user object (user) and ranked information from the userRank (userRank) (DEPRECATED...)
   function GiveUser(user, userRank)
@@ -222,10 +311,9 @@ import './App.css';
   const renderUser = (user, index) => {
 
     
-    console.log(user);
 
     return(
-    <li key = {index}>
+    <li key = {index} id = {index}>
       <div className='user'>
         <h1> # {index + 1}</h1>
         <h1>{user.myPlayerData.name}</h1>
@@ -233,6 +321,7 @@ import './App.css';
         <h2>Summoner Level {user.myPlayerData.summonerLevel}</h2>
         {JSON.stringify(user.myRankedData) != '{}' ? <h3>Summoner Solo Queue Rank : {user.myRankedData.tier} {user.myRankedData.rank}</h3> : <h3>Summoner is Unranked...</h3>}
         <h2>{Math.round(user.score)} LP/HR</h2>
+        <button onClick={() => removePlayer(user)}>REMOVE PLAYER</button>
       </div>
     </li>
     )
@@ -368,9 +457,9 @@ import './App.css';
   async function onStart()
   {
    
-    console.log("DICK AND SHIT");
+    //localStorage.clear();
     localStorage.removeItem("c1_192.168.1.14:3000");
-
+    console.log(localStorage);
     //localStorage.clear();
     if(localStorage.length > 0 && started == false && users.length <= 0)
     {
@@ -378,9 +467,9 @@ import './App.css';
       for(var  i = 0; i < localStorage.length; i++)
       {
         var playerName = localStorage.getItem(i);
-        await addPlayerByName(String(playerName));
+        batch_ids.push(playerName);
       }
-      console.log(localStorage);
+      //console.log(localStorage);
       await setStarted(!started);
     }
   }
